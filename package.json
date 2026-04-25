@@ -1,0 +1,26 @@
+{
+  "name": "agent-handoff",
+  "version": "0.1.0",
+  "description": "Repo-native handoff CLI for moving work between coding agents.",
+  "type": "module",
+  "bin": {
+    "agent-handoff": "./dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit && npm run build && node --check dist/bin.js",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
+  }
+}
