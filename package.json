@@ -1,10 +1,10 @@
 {
-  "name": "agent-handoff",
+  "name": "ccrelay",
   "version": "0.1.0",
-  "description": "Repo-native handoff CLI for moving work between coding agents.",
+  "description": "Handoff CLI for moving work between coding agents.",
   "type": "module",
   "bin": {
-    "agent-handoff": "./dist/bin.js"
+    "ccrelay": "./dist/bin.js"
   },
   "scripts": {
     "build": "tsc",

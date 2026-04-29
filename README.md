@@ -1,6 +1,6 @@
-# agent-handoff
+# ccrelay
 
-`agent-handoff` creates a repo-native handoff file so Claude Code and Codex can safely continue work from the same working tree.
+`ccrelay` creates a handoff file so Claude Code and Codex can safely continue work from the same working tree.
 
 The tool does not try to migrate a full conversation. It writes `.handoff/current.md` from:
 
@@ -36,11 +36,11 @@ npm run check
 ## Commands
 
 ```sh
-agent-handoff doctor
-agent-handoff inspect [--source claude|codex] [--pick]
-agent-handoff write [--from claude|codex] [--locale en|ja] [--session <id>] [--latest] [--target claude|codex]
-agent-handoff to codex [--dry-run] [--from claude] [--locale en|ja] [--session <id>] [--latest] [--no-write]
-agent-handoff to claude [--dry-run] [--from codex] [--locale en|ja] [--session <id>] [--latest] [--no-write]
+ccrelay doctor
+ccrelay inspect [--source claude|codex] [--pick]
+ccrelay write [--from claude|codex] [--locale en|ja] [--session <id>] [--latest] [--target claude|codex]
+ccrelay to codex [--dry-run] [--from claude] [--locale en|ja] [--session <id>] [--latest] [--no-write]
+ccrelay to claude [--dry-run] [--from codex] [--locale en|ja] [--session <id>] [--latest] [--no-write]
 ```
 
 `write` creates `.handoff/current.md` and does not launch another agent.
@@ -54,8 +54,8 @@ The session picker supports fuzzy search. Type to filter, use the arrow keys to 
 Use `--locale ja` to generate the fixed handoff sections and target prompt in Japanese while preserving the raw `continues` session summary.
 
 ```sh
-agent-handoff write --from codex --locale ja
-agent-handoff to claude --from codex --locale ja --dry-run
+ccrelay write --from codex --locale ja
+ccrelay to claude --from codex --locale ja --dry-run
 ```
 
 ## Environment

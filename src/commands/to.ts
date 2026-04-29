@@ -36,7 +36,7 @@ export async function runTo(target: TargetAgent, argv: string[]): Promise<void> 
     });
   } else {
     await readHandoffFile(root).catch(() => {
-      throw new Error(".handoff/current.md does not exist. Run agent-handoff write first or omit --no-write.");
+      throw new Error(".handoff/current.md does not exist. Run ccrelay write first or omit --no-write.");
     });
     locale = await resolveLocale(options.locale);
   }

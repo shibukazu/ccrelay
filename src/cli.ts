@@ -29,24 +29,24 @@ export async function main(argv: string[]): Promise<void> {
 
   if (command === "to") {
     if (!["codex", "claude"].includes(subcommand)) {
-      throw new Error("Usage: agent-handoff to <codex|claude> [--dry-run] [--from claude|codex] [--session id] [--no-write]");
+      throw new Error("Usage: ccrelay to <codex|claude> [--dry-run] [--from claude|codex] [--session id] [--no-write]");
     }
     await runTo(subcommand as TargetAgent, rest);
     return;
   }
 
-  throw new Error(`Unknown command: ${command}\nRun agent-handoff --help for usage.`);
+  throw new Error(`Unknown command: ${command}\nRun ccrelay --help for usage.`);
 }
 
 function printHelp(): void {
-  console.log(`agent-handoff
+  console.log(`ccrelay
 
 Usage:
-  agent-handoff doctor
-  agent-handoff inspect [--source claude|codex] [--pick]
-  agent-handoff write [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--target claude|codex] [--include-diff]
-  agent-handoff to codex [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--no-write]
-  agent-handoff to claude [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--no-write]
+  ccrelay doctor
+  ccrelay inspect [--source claude|codex] [--pick]
+  ccrelay write [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--target claude|codex] [--include-diff]
+  ccrelay to codex [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--no-write]
+  ccrelay to claude [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--no-write]
 
 Environment:
   AGENT_HANDOFF_CONTINUES_BIN="npx continues"

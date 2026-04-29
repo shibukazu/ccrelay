@@ -42,7 +42,7 @@ export async function listSessions({ cwd, source }: ListSessionsOptions = {}): P
 
 export async function inspectSessionMarkdown(sessionId: string, { cwd, preset = "standard" }: InspectSessionOptions = {}): Promise<string> {
   const command = continuesCommand();
-  const tempDir = await mkdtemp(join(tmpdir(), "agent-handoff-"));
+  const tempDir = await mkdtemp(join(tmpdir(), "ccrelay-"));
   const outputPath = join(tempDir, "session.md");
   const args = [...command.args, "inspect", sessionId, "--preset", preset, "--write-md", outputPath];
 
