@@ -1,10 +1,10 @@
 {
-  "name": "agent-baton",
+  "name": "ccrelay",
   "version": "0.1.2",
   "description": "Repo-native handoff CLI for moving work between coding agents.",
   "type": "module",
   "bin": {
-    "agent-baton": "./dist/bin.js"
+    "ccrelay": "./dist/bin.js"
   },
   "scripts": {
     "build": "tsc",
