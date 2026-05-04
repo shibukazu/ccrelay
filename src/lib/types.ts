@@ -1,6 +1,7 @@
 export type Agent = "claude" | "codex";
 export type TargetAgent = Agent;
 export type Locale = "en" | "ja";
+export type Detail = "summary" | "standard" | "full";
 
 export interface CommandSpec {
   bin: string;
@@ -11,6 +12,7 @@ export interface RunOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   shell?: boolean;
+  stdin?: string;
 }
 
 export interface RunResult {
@@ -52,13 +54,14 @@ export interface HandoffData {
   generatedAt: string;
   repository: string;
   sourceAgent?: string;
-  targetAgent?: string;
   sessionId?: string;
   sessionSummary?: string;
+  compactSummary?: string;
   modifiedFiles: string[];
   gitStatus: string;
   gitDiffStat: string;
   diff?: string;
   repoInstructions: string[];
   locale: Locale;
+  detail: Detail;
 }

@@ -3,20 +3,21 @@ import type { RunOptions, RunResult } from "./types.js";
 
 export async function run(command: string, args: string[] = [], options: RunOptions = {}): Promise<RunResult> {
   return new Promise((resolve) => {
+    const hasStdin = typeof options.stdin === "string";
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: options.env ?? process.env,
       shell: options.shell ?? false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: [hasStdin ? "pipe" : "ignore", "pipe", "pipe"],
     });
 
     let stdout = "";
     let stderr = "";
 
-    child.stdout.on("data", (chunk: Buffer) => {
+    child.stdout?.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();
     });
-    child.stderr.on("data", (chunk: Buffer) => {
+    child.stderr?.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
     });
     child.on("error", (error) => {
@@ -25,6 +26,10 @@ export async function run(command: string, args: string[] = [], options: RunOpti
     child.on("close", (code) => {
       resolve({ ok: code === 0, code, stdout, stderr });
     });
+
+    if (hasStdin && child.stdin) {
+      child.stdin.end(options.stdin);
+    }
   });
 }
 

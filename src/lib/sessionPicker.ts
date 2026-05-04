@@ -3,6 +3,7 @@ import { enterAlternateScreen, exitAlternateScreen } from "./screen.js";
 import {
   getSessionId,
   getSessionSource,
+  inspectSessionMarkdown,
   sessionPath,
   sessionTime,
   sessionTitle,
@@ -13,7 +14,16 @@ interface PickerState {
   query: string;
   cursor: number;
   offset: number;
+  showDetail: boolean;
 }
+
+interface DetailEntry {
+  status: "loading" | "ready" | "error";
+  preview?: string;
+  error?: string;
+}
+
+const detailCache = new Map<string, DetailEntry>();
 
 const styles = {
   reset: "\x1b[0m",
@@ -24,12 +34,12 @@ const styles = {
   selected: "\x1b[48;5;60m\x1b[97m",
 };
 
-export async function pickSession(sessions: SessionCandidate[]): Promise<SessionCandidate> {
+export async function pickSession(sessions: SessionCandidate[], options: { cwd?: string } = {}): Promise<SessionCandidate> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error("Interactive session picker requires a TTY. Re-run with --latest or --session <id>.");
   }
 
-  const state: PickerState = { query: "", cursor: 0, offset: 0 };
+  const state: PickerState = { query: "", cursor: 0, offset: 0, showDetail: false };
   const previousRawMode = process.stdin.isRaw;
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
@@ -53,6 +63,28 @@ export async function pickSession(sessions: SessionCandidate[]): Promise<Session
       reject(error);
     };
 
+    const requestDetail = (session: SessionCandidate | undefined): void => {
+      if (!session || !state.showDetail) return;
+      const id = getSessionId(session);
+      if (!id || detailCache.has(id)) return;
+      detailCache.set(id, { status: "loading" });
+      inspectSessionMarkdown(id, { cwd: options.cwd })
+        .then((md) => {
+          detailCache.set(id, { status: "ready", preview: extractLatestMessage(md) });
+          render(sessions, state);
+        })
+        .catch((error: unknown) => {
+          detailCache.set(id, { status: "error", error: error instanceof Error ? error.message : String(error) });
+          render(sessions, state);
+        });
+    };
+
+    const rerender = (): void => {
+      const matches = filteredSessions(sessions, state.query);
+      requestDetail(matches[state.cursor]);
+      render(sessions, state);
+    };
+
     const onKeypress = (input: string, key: readline.Key): void => {
       const matches = filteredSessions(sessions, state.query);
       if (key.ctrl && key.name === "c") {
@@ -68,28 +100,33 @@ export async function pickSession(sessions: SessionCandidate[]): Promise<Session
         fail(new Error("Session selection cancelled."));
         return;
       }
+      if (key.name === "tab") {
+        state.showDetail = !state.showDetail;
+        rerender();
+        return;
+      }
       if (key.name === "backspace") {
         state.query = state.query.slice(0, -1);
         state.cursor = 0;
         state.offset = 0;
-        render(sessions, state);
+        rerender();
         return;
       }
       if (key.name === "up") {
         state.cursor = Math.max(0, state.cursor - 1);
-        render(sessions, state);
+        rerender();
         return;
       }
       if (key.name === "down") {
         state.cursor = Math.min(Math.max(0, matches.length - 1), state.cursor + 1);
-        render(sessions, state);
+        rerender();
         return;
       }
       if (input && input >= " " && input !== "\x7f") {
         state.query += input;
         state.cursor = 0;
         state.offset = 0;
-        render(sessions, state);
+        rerender();
       }
     };
 
@@ -102,14 +139,14 @@ export async function pickSession(sessions: SessionCandidate[]): Promise<Session
 function render(sessions: SessionCandidate[], state: PickerState): void {
   const matches = filteredSessions(sessions, state.query);
   if (state.cursor >= matches.length) state.cursor = Math.max(0, matches.length - 1);
-  const visibleCount = visibleSessionCount();
+  const visibleCount = visibleSessionCount(state.showDetail);
   state.offset = scrollOffset(state.offset, state.cursor, visibleCount, matches.length);
 
   renderClear();
   const shown = Math.min(matches.length, visibleCount);
   const windowed = matches.slice(state.offset, state.offset + shown);
   process.stdout.write(`${styles.bold}Select session${styles.reset}  ${styles.dim}${matches.length}/${sessions.length} matches${styles.reset}\n`);
-  process.stdout.write(`${styles.dim}Type to fuzzy search. Up/Down move. Enter choose. Esc cancel.${styles.reset}\n\n`);
+  process.stdout.write(`${styles.dim}Type to fuzzy search. Up/Down move. Enter choose. Tab toggle detail. Esc cancel.${styles.reset}\n\n`);
   process.stdout.write(`${styles.cyan}?${styles.reset} ${state.query || styles.dim + "search sessions" + styles.reset}\n\n`);
 
   if (matches.length === 0) {
@@ -131,6 +168,64 @@ function render(sessions: SessionCandidate[], state: PickerState): void {
   if (remaining > 0) {
     process.stdout.write(`${styles.dim}↓ ${remaining} more results. Keep pressing Down or refine the query.${styles.reset}\n`);
   }
+
+  if (state.showDetail) {
+    const selected = matches[state.cursor];
+    process.stdout.write("\n");
+    process.stdout.write(`${styles.bold}── Latest message ──${styles.reset}\n`);
+    process.stdout.write(formatDetailPanel(selected));
+    process.stdout.write("\n");
+  }
+}
+
+function formatDetailPanel(session: SessionCandidate | undefined): string {
+  if (!session) return `${styles.dim}(no session selected)${styles.reset}\n`;
+  const id = getSessionId(session);
+  if (!id) return `${styles.dim}(session has no id)${styles.reset}\n`;
+  const entry = detailCache.get(id);
+  if (!entry || entry.status === "loading") {
+    return `${styles.dim}Loading latest message...${styles.reset}\n`;
+  }
+  if (entry.status === "error") {
+    return `${styles.yellow}Failed to load: ${entry.error ?? "unknown error"}${styles.reset}\n`;
+  }
+  if (!entry.preview) {
+    return `${styles.dim}(no recent message available)${styles.reset}\n`;
+  }
+  const lines = entry.preview.split("\n").slice(0, detailPanelLineLimit());
+  return lines.map((line) => `  ${truncateForWidth(line, terminalWidth() - 2)}`).join("\n") + "\n";
+}
+
+function truncateForWidth(value: string, width: number): string {
+  if (value.length <= width) return value;
+  return `${value.slice(0, Math.max(0, width - 1))}…`;
+}
+
+function detailPanelLineLimit(): number {
+  return 8;
+}
+
+export function extractLatestMessage(markdown: string): string {
+  if (!markdown) return "";
+  const lines = markdown.split("\n");
+  const messageHeader = /^###\s+(User|Assistant)\b/;
+  let lastMessageIndex = -1;
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (messageHeader.test(lines[i])) {
+      lastMessageIndex = i;
+      break;
+    }
+  }
+  if (lastMessageIndex === -1) return lines.slice(-12).join("\n").trim();
+
+  let endIndex = lines.length;
+  for (let i = lastMessageIndex + 1; i < lines.length; i += 1) {
+    if (/^#{2,6}\s/.test(lines[i])) {
+      endIndex = i;
+      break;
+    }
+  }
+  return lines.slice(lastMessageIndex, endIndex).join("\n").trim();
 }
 
 function renderClear(): void {
@@ -231,9 +326,9 @@ function terminalWidth(): number {
   return Math.max(40, process.stdout.columns || 80);
 }
 
-function visibleSessionCount(): number {
+function visibleSessionCount(showDetail = false): number {
   const rows = process.stdout.rows || 24;
-  const reservedRows = 8;
+  const reservedRows = 8 + (showDetail ? detailPanelLineLimit() + 2 : 0);
   const rowHeight = 4;
   return Math.max(1, Math.min(12, Math.floor((rows - reservedRows) / rowHeight)));
 }
