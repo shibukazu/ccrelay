@@ -1,6 +1,6 @@
 {
   "name": "ccrelay",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Handoff CLI for moving work between coding agents.",
   "type": "module",
   "bin": {
