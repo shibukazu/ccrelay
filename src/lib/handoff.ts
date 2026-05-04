@@ -40,6 +40,12 @@ function buildEnglishHandoffMarkdown(data: HandoffData): string {
   const modifiedFiles = data.modifiedFiles.length > 0
     ? data.modifiedFiles.map((line) => `- \`${line}\``).join("\n")
     : "- (no modified files reported by git status)";
+  const compactBlock = data.compactSummary
+    ? `\n## Compact Summary\n\n${data.compactSummary}\n`
+    : "";
+  const sessionBlock = data.sessionSummary
+    ? `\n## Session Summary\n\n${data.sessionSummary}\n`
+    : "";
 
   return `# Agent Handoff
 
@@ -47,8 +53,8 @@ function buildEnglishHandoffMarkdown(data: HandoffData): string {
 - Generated at: ${data.generatedAt}
 - Repository: ${data.repository}
 - Source agent: ${data.sourceAgent ?? "unknown"}
-- Target agent: ${data.targetAgent ?? "unspecified"}
 - Session id: ${data.sessionId ?? "unknown"}
+- Detail: ${data.detail}
 
 ## Critical Instructions
 - Continue from the current working tree.
@@ -61,11 +67,7 @@ Continue the current repository work safely from the latest available agent sess
 
 ## Current State
 This handoff was generated from the current workspace plus the selected session summary. Verify the workspace before making edits.
-
-## Session Summary
-
-${data.sessionSummary || "(continues did not provide a session summary)"}
-
+${compactBlock}${sessionBlock}
 ## Modified Files
 ${modifiedFiles}
 
@@ -101,6 +103,12 @@ function buildJapaneseHandoffMarkdown(data: HandoffData): string {
   const modifiedFiles = data.modifiedFiles.length > 0
     ? data.modifiedFiles.map((line) => `- \`${line}\``).join("\n")
     : "- (git status で変更中のファイルは検出されませんでした)";
+  const compactBlock = data.compactSummary
+    ? `\n## 要約\n\n${data.compactSummary}\n`
+    : "";
+  const sessionBlock = data.sessionSummary
+    ? `\n## Session Summary\n\n以下は \`continues\` から得た session summary です。原文の情報を保つため、内容は翻訳せずそのまま残しています。\n\n${data.sessionSummary}\n`
+    : "";
 
   return `# Agent Handoff
 
@@ -108,9 +116,9 @@ function buildJapaneseHandoffMarkdown(data: HandoffData): string {
 - 生成日時: ${data.generatedAt}
 - リポジトリ: ${data.repository}
 - 引き継ぎ元 agent: ${data.sourceAgent ?? "unknown"}
-- 引き継ぎ先 agent: ${data.targetAgent ?? "unspecified"}
 - Session id: ${data.sessionId ?? "unknown"}
 - Locale: ja
+- Detail: ${data.detail}
 
 ## 重要な指示
 - 現在の working tree から作業を継続すること。
@@ -124,13 +132,7 @@ function buildJapaneseHandoffMarkdown(data: HandoffData): string {
 
 ## 現在の状態
 この handoff は、現在の workspace と選択された session summary から生成されています。作業前に必ず実際の workspace を確認してください。
-
-## Session Summary
-
-以下は \`continues\` から得た session summary です。原文の情報を保つため、内容は翻訳せずそのまま残しています。
-
-${data.sessionSummary || "(\`continues\` から session summary は取得できませんでした)"}
-
+${compactBlock}${sessionBlock}
 ## 変更中のファイル
 ${modifiedFiles}
 

@@ -44,12 +44,13 @@ function printHelp(): void {
 Usage:
   ccrelay doctor
   ccrelay inspect [--source claude|codex] [--pick]
-  ccrelay write [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--target claude|codex] [--include-diff]
-  ccrelay to codex [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--no-write]
-  ccrelay to claude [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--no-write]
+  ccrelay write [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--detail summary|standard|full] [--include-diff]
+  ccrelay to codex [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--detail summary|standard|full] [--no-write]
+  ccrelay to claude [--dry-run] [--from claude|codex] [--locale en|ja] [--session id] [--latest] [--detail summary|standard|full] [--no-write]
 
 Environment:
   AGENT_HANDOFF_CONTINUES_BIN="npx continues"
   AGENT_HANDOFF_CODEX_BIN="codex"
-  AGENT_HANDOFF_CLAUDE_BIN="claude"`);
+  AGENT_HANDOFF_CLAUDE_BIN="claude"
+  AGENT_HANDOFF_SUMMARIZER_BIN="claude --print"  # used for --detail summary; defaults to source agent CLI`);
 }

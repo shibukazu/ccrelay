@@ -14,6 +14,7 @@ export async function runTo(target: TargetAgent, argv: string[]): Promise<void> 
     from: "value",
     locale: "value",
     session: "value",
+    detail: "value",
   });
 
   const root = await repoRoot(process.cwd());
@@ -27,11 +28,12 @@ export async function runTo(target: TargetAgent, argv: string[]): Promise<void> 
       const resolvedLocale = await resolveLocale(options.locale);
       const from = typeof options.from === "string" ? options.from : await pickFromAgent(target);
 
-      const writeArgs: string[] = ["--from", from, "--locale", resolvedLocale, "--target", target];
+      const writeArgs: string[] = ["--from", from, "--locale", resolvedLocale];
       if (typeof options.session === "string") writeArgs.push("--session", options.session);
       if (options.latest) writeArgs.push("--latest");
+      if (typeof options.detail === "string") writeArgs.push("--detail", options.detail);
 
-      await runWrite(writeArgs, { root, silent: true });
+      await runWrite(writeArgs, { root, silent: true, skipPbcopyPrompt: true });
       return resolvedLocale;
     });
   } else {

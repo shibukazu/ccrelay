@@ -31,7 +31,7 @@ export async function runInspect(argv: string[]): Promise<void> {
   }
 
   if (options.pick) {
-    const selected = await pickSession(sessions);
+    const selected = await pickSession(sessions, { cwd: root });
     console.log(getSessionId(selected));
     return;
   }
